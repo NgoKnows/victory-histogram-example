@@ -43,7 +43,7 @@ const UnfilledBar = styled.div`
 
 const ColoredBar = styled.div.attrs(({ percentage }) => ({
   style: {
-    width: `${percentage * 100}%`,
+    transform: `scaleX(${percentage})`,
   },
 }))`
   position: absolute;
@@ -54,7 +54,7 @@ const ColoredBar = styled.div.attrs(({ percentage }) => ({
   transform-origin: 0 0;
   background-color: ${({ color }) => color};
   border-radius: 6px;
-  transition: width 0.55s ease-out;
+  transition: transform 0.45s ease-out;
 `;
 
 const CircleTransitionContainer = styled.div.attrs(({ value }) => ({
@@ -105,7 +105,7 @@ const BiggerCircle = styled.div`
 `;
 
 const TooltipTransitionContainer = styled(CircleTransitionContainer)`
-  /* transition: transform 0.55s ease-out; */
+  /* transition: transform 0.45s ease-out; */
 `;
 
 // interface ITooltipProps {
@@ -143,6 +143,20 @@ const Triangle = styled.div`
   opacity: ${({ dragging }) => (dragging ? 1 : 0)};
   transform: translate(-50%, ${({ dragging }) => (dragging ? "-25px" : "0px")});
   transition: all 0.3s ease-out;
+`;
+
+const Notch = styled.div`
+  position: absolute;
+  top: 50%;
+  left: ${({ percentage }) => `${percentage}%`};
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background-color: ${({ active, color }) => (active ? color : "lightgray")};
+  margin-top: 11px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  transition: background-color 0.45s ease-out;
 `;
 
 export default class Slider extends React.Component {
@@ -222,7 +236,7 @@ export default class Slider extends React.Component {
   };
 
   render() {
-    const { color } = this.props;
+    const { color, tooltipValues } = this.props;
     const { dragging, percentage } = this.state;
 
     return (
@@ -234,6 +248,18 @@ export default class Slider extends React.Component {
         <UnfilledBar />
         <ColoredBar percentage={percentage} color={color} />
 
+        {tooltipValues.map((tooltip, index) => {
+          const tooltipPercentage = index / (tooltipValues.length - 1);
+
+          return (
+            <Notch
+              key={index}
+              percentage={tooltipPercentage * 100}
+              color={color}
+              active={tooltipPercentage <= percentage}
+            />
+          );
+        })}
         <TooltipTransitionContainer value={percentage * 100}>
           <Tooltip dragging={true} color={color}>
             {this.getTooltipText()}
