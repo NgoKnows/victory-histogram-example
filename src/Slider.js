@@ -67,9 +67,6 @@ const CircleTransitionContainer = styled.div.attrs(({ value }) => ({
   position: relative;
 `;
 
-// interface ICircleProps {
-//   color: string;
-// }
 const Circle = styled.div`
   position: absolute;
   left: 0;
@@ -108,10 +105,6 @@ const TooltipTransitionContainer = styled(CircleTransitionContainer)`
   /* transition: transform 0.45s ease-out; */
 `;
 
-// interface ITooltipProps {
-//   dragging: boolean;
-//   color: string;
-// }
 const Tooltip = styled.div`
   position: absolute;
   left: 0;
@@ -208,7 +201,24 @@ export default class Slider extends React.Component {
   };
 
   handleDragDone = () => {
-    this.setState({ dragging: false });
+    const { tooltipValues } = this.props;
+    const b = tooltipValues
+      .map((__, index) => index / (tooltipValues.length - 1))
+      .reverse()
+      .reduce(
+        (curClosest, tooltipPercentage) => {
+          return Math.abs(this.state.percentage - tooltipPercentage) <
+            curClosest[1]
+            ? [
+                tooltipPercentage,
+                Math.abs(this.state.percentage - tooltipPercentage),
+              ]
+            : curClosest;
+        },
+        [0, Infinity]
+      )[0];
+    this.setState({ dragging: false, percentage: b });
+
     this.props.onChange(this.state.percentage * this.props.maxValue);
   };
 

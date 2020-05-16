@@ -4,6 +4,8 @@ import {
   VictoryHistogram,
   VictoryAxis,
   VictoryLabel,
+  VictoryTooltip,
+  VictoryVoronoiContainer,
 } from "victory";
 import _ from "lodash";
 import "./App.css";
@@ -81,8 +83,12 @@ const Container = styled.div`
 
 const Card = styled.div`
   background-color: #24232a;
-  border-radius: 3px;
+  border-radius: 5px;
   padding: 30px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  border-color: #ff719a;
+  border-left-width: 10px;
+  border-left-style: solid;
 `;
 
 const yearToSeason = (year) => {
@@ -93,6 +99,25 @@ const YEARS = Object.keys(data).map((year) => parseInt(year, 10));
 const FIRST_YEAR = 1990;
 const LAST_YEAR = 2019;
 const TOTAL_YEARS = LAST_YEAR - FIRST_YEAR;
+
+const Tooltip = styled.div`
+  background-color: yellow;
+  transform: translate(-50%, -50%);
+`;
+export class GraphTooltip extends React.Component {
+  render() {
+    const { datum, x, y } = this.props;
+    return (
+      <g style={{ pointerEvents: "none" }}>
+        <foreignObject x={x} y={y} width="350" height="300">
+          <Tooltip>
+            <span>{datum.binnedData.length}</span>
+          </Tooltip>
+        </foreignObject>
+      </g>
+    );
+  }
+}
 
 function App() {
   const [year, setYear] = useState(FIRST_YEAR);
@@ -109,7 +134,22 @@ function App() {
         </defs>
       </svg>
       <Card>
-        <VictoryChart>
+        <VictoryChart
+          // containerComponent={
+          //   <VictoryVoronoiContainer
+          //     voronoiDimension="x"
+          //     labels={({ datum }) => ""}
+          //     labelComponent={
+          //       <VictoryTooltip active flyoutComponent={<GraphTooltip />} />
+          //     }
+          //   />
+          // }
+          style={{
+            parent: {
+              overflow: "visible",
+            },
+          }}
+        >
           <VictoryLabel
             text={`3pt Attempt Averages (${yearToSeason(year)})`}
             x={225}
@@ -148,12 +188,12 @@ function App() {
           />
           <VictoryHistogram
             cornerRadius={2}
-            domain={{ y: [0, 150] }}
+            domain={{ y: [0, 160] }}
             animate={{
               duration: 300,
             }}
             data={data[year]}
-            bins={_.range(0, 16)}
+            bins={_.range(0, 16, 2)}
             style={{
               data: {
                 stroke: "transparent",
@@ -162,8 +202,34 @@ function App() {
                 mixBlendMode: "normal",
                 vectorEffect: "non-scaling-stroke",
               },
+              labels: {
+                fill: "red",
+              },
             }}
             x="3pa"
+            labels={({ datum }) =>
+              `${datum.binnedData.length} player${
+                datum.binnedData.length > 1 ? "s" : ""
+              } averaged \n between ${datum.x0}-${
+                datum.x1
+              } 3PT attempts \n ${datum.binnedData
+                .slice(0, 3)
+                .map(({ player }) => player)
+                .join(", ")}`
+            }
+            labelComponent={
+              <VictoryTooltip
+                style={{
+                  fill: white,
+                  fontSize: 11,
+                }}
+                flyoutStyle={{
+                  fill: "#24232a",
+                  stroke: "#FF719A",
+                  strokeWidth: 0.5,
+                }}
+              />
+            }
           />
         </VictoryChart>
       </Card>
@@ -176,6 +242,11 @@ const SliderContainer = styled.div`
   background-color: #24232a;
   margin-top: 24px;
   padding: 80px 50px 50px;
+  border-radius: 5px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  border-color: #ff719a;
+  border-left-width: 10px;
+  border-left-style: solid;
 `;
 
 const getYear = (percent) =>
