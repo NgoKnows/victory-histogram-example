@@ -10,12 +10,6 @@ import styled from "styled-components";
 //   color: string;
 // }>;
 
-// type IState = Readonly<{
-//   dragging: boolean;
-//   percentage: number;
-//   previousValueProp: number;
-// }>;
-
 const BAR_HEIGHT = 10;
 
 function isTouchEvent(event) {
@@ -112,14 +106,16 @@ const Tooltip = styled.div`
   background: ${({ color }) => color};
   color: #fff;
   text-align: center;
-  opacity: ${({ dragging }) => (dragging ? 0.9 : 0)};
   padding: 10px;
   pointer-events: none;
   min-width: 40px;
   z-index: 100;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
   transition: all 0.3s ease-out;
-  transform: translate(-50%, ${({ dragging }) => (dragging ? "-25px" : "0px")});
+  transform: translate(
+    -50%,
+    ${({ dragging }) => (dragging ? "-32px" : "-25px")}
+  );
   border-radius: 3px;
   font-weight: bold;
   font-size: 16px;
@@ -136,8 +132,10 @@ const Triangle = styled.div`
   border-left: solid transparent 12px;
   border-right: solid transparent 12px;
   border-top: solid ${({ color }) => color} 12px;
-  opacity: ${({ dragging }) => (dragging ? 1 : 0)};
-  transform: translate(-50%, ${({ dragging }) => (dragging ? "-25px" : "0px")});
+  transform: translate(
+    -50%,
+    ${({ dragging }) => (dragging ? "-32px" : "-25px")}
+  );
   transition: all 0.3s ease-out;
 `;
 
@@ -207,25 +205,11 @@ export default class Slider extends React.Component {
   };
 
   handleDragDone = () => {
-    const { tooltipValues } = this.props;
-    const b = tooltipValues
-      .map((__, index) => index / (tooltipValues.length - 1))
-      .reverse()
-      .reduce(
-        (curClosest, tooltipPercentage) => {
-          return Math.abs(this.state.percentage - tooltipPercentage) <
-            curClosest[1]
-            ? [
-                tooltipPercentage,
-                Math.abs(this.state.percentage - tooltipPercentage),
-              ]
-            : curClosest;
-        },
-        [0, Infinity]
-      )[0];
-    this.setState({ dragging: false, percentage: b });
+    const { maxValue } = this.props;
+    const { percentage } = this.state;
 
-    this.props.onChange(this.state.percentage * this.props.maxValue);
+    this.setState({ dragging: false });
+    this.props.onChange(percentage * maxValue);
   };
 
   handleDragStart = (ev) => {
@@ -248,7 +232,7 @@ export default class Slider extends React.Component {
 
     const index = Math.round((length - 1) * percentage);
 
-    return <div key={index}>{tooltipValues[index]}</div>;
+    return tooltipValues[index];
   };
 
   render() {
@@ -268,22 +252,20 @@ export default class Slider extends React.Component {
           const tooltipPercentage = index / (tooltipValues.length - 1);
 
           return (
-            <>
-              <Notch
-                key={index}
-                value={tooltipPercentage * 100}
-                color={color}
-                active={tooltipPercentage <= percentage}
-              />
-            </>
+            <Notch
+              key={index}
+              value={tooltipPercentage * 100}
+              color={color}
+              active={tooltipPercentage <= percentage}
+            />
           );
         })}
 
         <TooltipContainer value={percentage * 100}>
-          <Tooltip dragging={true} color={color}>
+          <Tooltip dragging={dragging} color={color}>
             {this.getTooltipText()}
           </Tooltip>
-          <Triangle dragging={true} color={color} />
+          <Triangle dragging={dragging} color={color} />
         </TooltipContainer>
 
         <CircleTransitionContainer value={percentage * 100}>
