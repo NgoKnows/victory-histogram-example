@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   VictoryChart,
   VictoryHistogram,
   VictoryAxis,
   VictoryLabel,
   VictoryTooltip,
-  VictoryVoronoiContainer,
 } from "victory";
 import _ from "lodash";
+import { useFriction } from "renature";
 import "./App.css";
 import styled from "styled-components";
 import data1990 from "./data/1990-91.json";
@@ -78,7 +78,8 @@ const data = {
 const white = "#cfcfcf";
 const Container = styled.div`
   background-color: #1a191e;
-  padding: 50px;
+  padding: 24px;
+  overflow: hidden;
 `;
 
 const Card = styled.div`
@@ -86,9 +87,7 @@ const Card = styled.div`
   border-radius: 5px;
   padding: 30px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-  border-color: #ff719a;
-  border-left-width: 10px;
-  border-left-style: solid;
+  border-left: 8px solid #ff719a;
 `;
 
 const yearToSeason = (year) => {
@@ -100,31 +99,12 @@ const FIRST_YEAR = 1990;
 const LAST_YEAR = 2019;
 const TOTAL_YEARS = LAST_YEAR - FIRST_YEAR;
 
-const Tooltip = styled.div`
-  background-color: yellow;
-  transform: translate(-50%, -50%);
-`;
-export class GraphTooltip extends React.Component {
-  render() {
-    const { datum, x, y } = this.props;
-    return (
-      <g style={{ pointerEvents: "none" }}>
-        <foreignObject x={x} y={y} width="350" height="300">
-          <Tooltip>
-            <span>{datum.binnedData.length}</span>
-          </Tooltip>
-        </foreignObject>
-      </g>
-    );
-  }
-}
-
 function App() {
   const [year, setYear] = useState(FIRST_YEAR);
 
   return (
     <Container className="App">
-      <svg>
+      <svg style={{ position: "fixed", opacity: 0 }}>
         <defs>
           <linearGradient id="gradient1" x1="0%" y1="0%" x2="50%" y2="100%">
             <stop offset="0%" stopColor="#FFE29F" />
@@ -144,6 +124,7 @@ function App() {
           //     }
           //   />
           // }
+          height={260}
           style={{
             parent: {
               overflow: "visible",
@@ -232,25 +213,25 @@ function App() {
             }
           />
         </VictoryChart>
+
+        <Slider year={year} setYear={setYear} />
       </Card>
-      <Slider year={year} setYear={setYear} />
     </Container>
   );
 }
 
 const SliderContainer = styled.div`
-  background-color: #24232a;
-  margin-top: 24px;
-  padding: 80px 50px 50px;
-  border-radius: 5px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-  border-color: #ff719a;
-  border-left-width: 10px;
-  border-left-style: solid;
+  padding: 80px 21px 10px;
+
+  @media (min-width: 800px) {
+    padding: 72px 52px 10px;
+  }
 `;
 
 const getYear = (percent) =>
   Math.round(FIRST_YEAR + TOTAL_YEARS * (percent / 100));
+
+const SEASONS = YEARS.map((year) => yearToSeason(year));
 
 const Slider = ({ year, setYear }) => {
   const [percent, setPercent] = useState(0);
@@ -268,7 +249,7 @@ const Slider = ({ year, setYear }) => {
         }}
         value={percent}
         maxValue={100}
-        tooltipValues={YEARS.map((year) => yearToSeason(year))}
+        tooltipValues={SEASONS}
       />
     </SliderContainer>
   );
