@@ -7,73 +7,10 @@ import {
   VictoryTooltip,
 } from "victory";
 import _ from "lodash";
-import { useFriction } from "renature";
 import "./App.css";
 import styled from "styled-components";
-import data1990 from "./data/1990-91.json";
-import data1991 from "./data/1991-92.json";
-import data1992 from "./data/1992-93.json";
-import data1993 from "./data/1993-94.json";
-import data1994 from "./data/1994-95.json";
-import data1995 from "./data/1995-96.json";
-import data1996 from "./data/1996-97.json";
-import data1997 from "./data/1997-98.json";
-import data1998 from "./data/1998-99.json";
-import data1999 from "./data/1999-00.json";
-import data2000 from "./data/2000-01.json";
-import data2001 from "./data/2001-02.json";
-import data2002 from "./data/2002-03.json";
-import data2003 from "./data/2003-04.json";
-import data2004 from "./data/2004-05.json";
-import data2005 from "./data/2005-06.json";
-import data2006 from "./data/2006-07.json";
-import data2007 from "./data/2007-08.json";
-import data2008 from "./data/2008-09.json";
-import data2009 from "./data/2009-10.json";
-import data2010 from "./data/2010-11.json";
-import data2011 from "./data/2011-12.json";
-import data2012 from "./data/2012-13.json";
-import data2013 from "./data/2013-14.json";
-import data2014 from "./data/2014-15.json";
-import data2015 from "./data/2015-16.json";
-import data2016 from "./data/2016-17.json";
-import data2017 from "./data/2017-18.json";
-import data2018 from "./data/2018-19.json";
-import data2019 from "./data/2019-20.json";
-import Foo from "./Slider";
-
-const data = {
-  1990: data1990,
-  1991: data1991,
-  1992: data1992,
-  1993: data1993,
-  1994: data1994,
-  1995: data1995,
-  1996: data1996,
-  1997: data1997,
-  1998: data1998,
-  1999: data1999,
-  2000: data2000,
-  2001: data2001,
-  2002: data2002,
-  2003: data2003,
-  2004: data2004,
-  2005: data2005,
-  2006: data2006,
-  2007: data2007,
-  2008: data2008,
-  2009: data2009,
-  2010: data2010,
-  2011: data2011,
-  2012: data2012,
-  2013: data2013,
-  2014: data2014,
-  2015: data2015,
-  2016: data2016,
-  2017: data2017,
-  2018: data2018,
-  2019: data2019,
-};
+import data from "./data/data.json";
+import Slider from "./Slider";
 
 const white = "#cfcfcf";
 const Container = styled.div`
@@ -214,7 +151,7 @@ function App() {
           />
         </VictoryChart>
 
-        <Slider year={year} setYear={setYear} />
+        <YearSlider year={year} setYear={setYear} />
       </Card>
     </Container>
   );
@@ -230,24 +167,23 @@ const SliderContainer = styled.div`
 
 const getYear = (percent) =>
   Math.round(FIRST_YEAR + TOTAL_YEARS * (percent / 100));
-
 const SEASONS = YEARS.map((year) => yearToSeason(year));
 
-const Slider = ({ year, setYear }) => {
-  const [percent, setPercent] = useState(0);
+const YearSlider = ({ year, setYear }) => {
+  const [value, setValue] = useState(0);
 
   return (
     <SliderContainer>
-      <Foo
-        onChange={(p) => {
-          setPercent(p);
-          const calculatedYear = getYear(percent);
+      <Slider
+        onChange={(newValue) => {
+          setValue(newValue);
+          const calculatedYear = getYear(newValue);
 
           if (year !== calculatedYear) {
             setYear(calculatedYear);
           }
         }}
-        value={percent}
+        value={value}
         maxValue={100}
         tooltipValues={SEASONS}
       />
