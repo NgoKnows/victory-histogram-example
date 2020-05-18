@@ -5,6 +5,7 @@ import {
   VictoryAxis,
   VictoryLabel,
   VictoryTooltip,
+  VictoryVoronoiContainer,
 } from "victory";
 import _ from "lodash";
 import "./App.css";
@@ -12,7 +13,12 @@ import styled from "styled-components";
 import data from "./data/data.json";
 import Slider from "./Slider";
 
-const white = "#cfcfcf";
+const filteredData = _.mapValues(data, (seasonData) =>
+  seasonData.filter(({ min }) => min > 20)
+);
+
+const LIGHT_GREY = "hsl(342.7, 20%, 90%)";
+const PINK = "hsl(342.7, 90%, 72.2%)";
 const Container = styled.div`
   background-color: #1a191e;
   padding: 24px;
@@ -24,7 +30,7 @@ const Card = styled.div`
   border-radius: 5px;
   padding: 30px 40px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-  border-left: 8px solid #ff719a;
+  border-left: 8px solid ${PINK};
 `;
 
 const yearToSeason = (year) => `${year}-${(year + 1 + "").slice(2, 4)}`;
@@ -38,6 +44,7 @@ const getTooltipText = ({ datum }) => {
   const { binnedData, x0, x1 } = datum;
 
   const playerCount = binnedData.length;
+
   const playerNames = binnedData
     .slice(0, 2)
     .map(({ player }) => {
@@ -46,11 +53,15 @@ const getTooltipText = ({ datum }) => {
     })
     .join(", ");
 
+  const playerNamesList = playerNames.length
+    ? ` \n (${playerNames}${
+        playerCount > 2 ? `, and ${playerCount - 2} more players` : ""
+      })`
+    : "";
+
   return `${playerCount} player${
-    playerCount > 1 ? "s" : ""
-  } averaged between ${x0}-${x1} 3PT attempts \n (${playerNames}${
-    playerCount > 2 ? `, and ${playerCount - 2} more players` : ""
-  })`;
+    playerCount === 1 ? "" : "s"
+  } averaged between ${x0}-${x1} 3PT attempts${playerNamesList}`;
 };
 
 const sharedAxisStyles = {
@@ -58,42 +69,59 @@ const sharedAxisStyles = {
     stroke: "transparent",
   },
   tickLabels: {
-    fill: white,
+    fill: LIGHT_GREY,
     fontSize: 12,
   },
   axisLabel: {
-    fill: white,
-    padding: 40,
+    fill: LIGHT_GREY,
+    padding: 36,
     fontSize: 13,
     fontStyle: "italic",
   },
 };
+
+const GradientSvg = styled.svg`
+  position: fixed;
+  opacity: 0;
+`;
 
 function App() {
   const [year, setYear] = useState(FIRST_YEAR);
 
   return (
     <Container>
-      <svg style={{ position: "fixed", opacity: 0 }}>
+      <GradientSvg>
         <defs>
           <linearGradient id="gradient1" x1="0%" y1="0%" x2="50%" y2="100%">
             <stop offset="0%" stopColor="#FFE29F" />
             <stop offset="47%" stopColor="#FFA99F" />
-            <stop offset="100%" stopColor="#FF719A" />
+            <stop offset="100%" stopColor={PINK} />
           </linearGradient>
         </defs>
-      </svg>
+      </GradientSvg>
+
       <Card>
         <VictoryChart
-          // containerComponent={
-          //   <VictoryVoronoiContainer
-          //     voronoiDimension="x"
-          //     labels={({ datum }) => ""}
-          //     labelComponent={
-          //       <VictoryTooltip active flyoutComponent={<GraphTooltip />} />
-          //     }
-          //   />
-          // }
+          containerComponent={
+            <VictoryVoronoiContainer
+              labels={getTooltipText}
+              voronoiDimension="x"
+              labelComponent={
+                <VictoryTooltip
+                  constrainToVisibleArea
+                  style={{
+                    fill: LIGHT_GREY,
+                    fontSize: 10,
+                  }}
+                  flyoutStyle={{
+                    fill: "#24232a",
+                    stroke: PINK,
+                    strokeWidth: 0.5,
+                  }}
+                />
+              }
+            />
+          }
           height={260}
         >
           <VictoryLabel
@@ -101,14 +129,14 @@ function App() {
             x={225}
             y={20}
             textAnchor="middle"
-            style={{ fill: white }}
+            style={{ fill: LIGHT_GREY }}
           />
           <VictoryAxis
             style={{
               ...sharedAxisStyles,
               grid: {
-                fill: white,
-                stroke: white,
+                fill: LIGHT_GREY,
+                stroke: LIGHT_GREY,
                 pointerEvents: "painted",
                 strokeWidth: 0.5,
               },
@@ -125,9 +153,9 @@ function App() {
           />
           <VictoryHistogram
             cornerRadius={2}
-            domain={{ y: [0, 160] }}
+            domain={{ y: [0, 120] }}
             animate={{ duration: 300 }}
-            data={data[year]}
+            data={filteredData[year]}
             bins={_.range(0, 16, 2)}
             style={{
               data: {
@@ -141,20 +169,6 @@ function App() {
               },
             }}
             x="3pa"
-            labels={getTooltipText}
-            labelComponent={
-              <VictoryTooltip
-                style={{
-                  fill: white,
-                  fontSize: 10,
-                }}
-                flyoutStyle={{
-                  fill: "#24232a",
-                  stroke: "#FF719A",
-                  strokeWidth: 0.5,
-                }}
-              />
-            }
           />
         </VictoryChart>
 
@@ -191,6 +205,7 @@ const YearSlider = ({ year, setYear }) => {
             setYear(calculatedYear);
           }
         }}
+        color={PINK}
         value={value}
         maxValue={100}
         tooltipValues={SEASONS}

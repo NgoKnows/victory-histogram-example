@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { clamp } from "lodash";
 import styled from "styled-components";
 
@@ -11,6 +11,8 @@ import styled from "styled-components";
 // }>;
 
 const BAR_HEIGHT = 10;
+const LIGHT_GREY = "hsl(342.7, 35%, 87%)";
+const GREY = "hsl(342.7, 10%, 60%)";
 
 function isTouchEvent(event) {
   return event.touches !== undefined;
@@ -31,7 +33,7 @@ const UnfilledBar = styled.div`
   height: ${BAR_HEIGHT}px;
   width: 100%;
   margin-top: 10px;
-  background-color: grey;
+  background-color: ${GREY};
   border-radius: 6px;
 `;
 
@@ -84,7 +86,7 @@ const BiggerCircle = styled.div`
   width: 50px;
   border-radius: 50%;
   cursor: pointer;
-  background-color: lightgrey;
+  background-color: ${LIGHT_GREY};
   opacity: ${({ dragging }) => (dragging ? 0.3 : 0)};
   z-index: 9;
   transform: translate(-50%, -50%);
@@ -111,10 +113,10 @@ const Tooltip = styled.div`
   min-width: 40px;
   z-index: 100;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
-  transition: all 0.3s ease-out;
+  transition: transform 0.3s ease-out;
   transform: translate(
     -50%,
-    ${({ dragging }) => (dragging ? "-32px" : "-25px")}
+    ${({ dragging }) => (dragging ? "-36px" : "-25px")}
   );
   border-radius: 3px;
   font-weight: bold;
@@ -129,14 +131,14 @@ const Tooltip = styled.div`
 const Triangle = styled.div`
   position: absolute;
   left: 0;
-  border-left: solid transparent 12px;
-  border-right: solid transparent 12px;
-  border-top: solid ${({ color }) => color} 12px;
+  border-left: solid transparent 14px;
+  border-right: solid transparent 14px;
+  border-top: solid ${({ color }) => color} 14px;
   transform: translate(
     -50%,
-    ${({ dragging }) => (dragging ? "-32px" : "-25px")}
+    ${({ dragging }) => (dragging ? "-36px" : "-25px")}
   );
-  transition: all 0.3s ease-out;
+  transition: color 0.3s ease-out, transform 0.3s ease-out;
 `;
 
 const Notch = styled.div`
@@ -147,8 +149,8 @@ const Notch = styled.div`
   height: 15px;
   width: 15px;
   border-radius: 50%;
-  background-color: ${({ active, color }) => (active ? color : "lightgray")};
-  margin-top: 11px;
+  background-color: ${({ active, color }) => (active ? color : LIGHT_GREY)};
+  margin-top: 11.5px;
   transform: translate(-50%, -50%);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
   transition: background-color 0.45s ease-out;
@@ -158,76 +160,50 @@ const Notch = styled.div`
   }
 `;
 
-export default class Slider extends React.Component {
-  static defaultProps = {
-    tooltipValues: [],
-    color: "#FF719A",
-  };
+const Slider = ({ tooltipValues, color, value, maxValue, onChange }) => {
+  const [dragging, setDragging] = useState(false);
+  const [percentage, setPercentage] = useState(value / maxValue);
+  const containerRef = useRef();
 
-  static getDerivedStateFromProps({ value, maxValue }, { previousValueProp }) {
-    if (previousValueProp === value) {
-      return null;
-    }
+  const handleDrag = useCallback(
+    (ev) => {
+      if (dragging) {
+        const left = containerRef.current.getBoundingClientRect().left;
+        const sliderWidth = containerRef.current.clientWidth;
+        const location = isTouchEvent(ev)
+          ? ev.touches[0].clientX - left
+          : ev.clientX - left;
 
-    return {
-      percentage: value / maxValue,
-      previousValueProp: value,
-    };
-  }
+        const newPercentage = clamp(location / sliderWidth, 0, 1);
 
-  state = {
-    dragging: false,
-    percentage: this.props.value / this.props.maxValue,
-    previousValueProp: this.props.value,
-  };
+        window.requestAnimationFrame(() => {
+          setPercentage(newPercentage);
+          onChange(percentage * maxValue);
+        });
+      }
+    },
+    [dragging, maxValue, onChange, percentage]
+  );
 
-  componentDidMount() {
-    window.addEventListener("mousemove", this.handleDrag);
-    window.addEventListener("touchmove", this.handleDrag);
-    window.addEventListener("touchend", this.handleDragDone);
-    window.addEventListener("mouseup", this.handleDragDone);
-  }
+  const handleDragDone = useCallback(() => {
+    setDragging(false);
+    onChange(percentage * maxValue);
+  }, [maxValue, onChange, percentage]);
 
-  handleDrag = (ev) => {
-    if (this.state.dragging) {
-      const left = this.ref.getBoundingClientRect().left;
-      const sliderWidth = this.ref.clientWidth;
-      const location = isTouchEvent(ev)
-        ? ev.touches[0].clientX - left
-        : ev.clientX - left;
-
-      const newPercentage = clamp(location / sliderWidth, 0, 1);
-      window.requestAnimationFrame(() => {
-        this.setState({ percentage: newPercentage });
-        this.props.onChange(this.state.percentage * this.props.maxValue);
-      });
-    }
-  };
-
-  handleDragDone = () => {
-    const { maxValue } = this.props;
-    const { percentage } = this.state;
-
-    this.setState({ dragging: false });
-    this.props.onChange(percentage * maxValue);
-  };
-
-  handleDragStart = (ev) => {
-    const left = this.ref.getBoundingClientRect().left;
-    const sliderWidth = this.ref.clientWidth;
+  const handleDragStart = (ev) => {
+    const left = containerRef.current.getBoundingClientRect().left;
+    const sliderWidth = containerRef.current.clientWidth;
     const location = isTouchEvent(ev)
       ? ev.touches[0].clientX - left
       : ev.clientX - left;
 
     const newPercentage = location / sliderWidth;
 
-    this.setState({ percentage: newPercentage, dragging: true });
+    setPercentage(newPercentage);
+    setDragging(true);
   };
 
-  getTooltipText = () => {
-    const { tooltipValues } = this.props;
-    const { percentage } = this.state;
-
+  const getTooltipText = () => {
     const length = tooltipValues.length;
 
     const index = Math.round((length - 1) * percentage);
@@ -235,52 +211,63 @@ export default class Slider extends React.Component {
     return tooltipValues[index];
   };
 
-  render() {
-    const { color, tooltipValues } = this.props;
-    const { dragging, percentage } = this.state;
+  useEffect(() => {
+    window.addEventListener("mousemove", handleDrag);
+    window.addEventListener("touchmove", handleDrag);
+    window.addEventListener("touchend", handleDragDone);
+    window.addEventListener("mouseup", handleDragDone);
 
-    return (
-      <Container
-        ref={(ref) => (this.ref = ref)}
-        onMouseDown={this.handleDragStart}
-        onTouchStart={this.handleDragStart}
-      >
-        <UnfilledBar />
-        <ColoredBar percentage={percentage} color={color} />
+    return () => {
+      window.removeEventListener("mousemove", handleDrag);
+      window.removeEventListener("touchmove", handleDrag);
+      window.removeEventListener("touchend", handleDragDone);
+      window.removeEventListener("mouseup", handleDragDone);
+    };
+  }, [handleDrag, handleDragDone]);
 
-        {tooltipValues.map((tooltip, index) => {
-          const tooltipPercentage = index / (tooltipValues.length - 1);
+  return (
+    <Container
+      ref={containerRef}
+      onMouseDown={handleDragStart}
+      onTouchStart={handleDragStart}
+    >
+      <UnfilledBar />
+      <ColoredBar percentage={percentage} color={color} />
 
-          return (
-            <Notch
-              key={index}
-              value={tooltipPercentage * 100}
-              color={color}
-              active={tooltipPercentage <= percentage}
-            />
-          );
-        })}
+      {tooltipValues.map((tooltip, index) => {
+        const tooltipPercentage = index / (tooltipValues.length - 1);
 
-        <TooltipContainer value={percentage * 100}>
-          <Tooltip dragging={dragging} color={color}>
-            {this.getTooltipText()}
-          </Tooltip>
-          <Triangle dragging={dragging} color={color} />
-        </TooltipContainer>
-
-        <CircleTransitionContainer value={percentage * 100}>
-          <Circle
+        return (
+          <Notch
+            key={index}
+            value={tooltipPercentage * 100}
             color={color}
-            onMouseDown={this.handleDragStart}
-            onTouchStart={this.handleDragStart}
+            active={tooltipPercentage <= percentage}
           />
-          <BiggerCircle
-            dragging={dragging}
-            onMouseDown={this.handleDragStart}
-            onTouchStart={this.handleDragStart}
-          />
-        </CircleTransitionContainer>
-      </Container>
-    );
-  }
-}
+        );
+      })}
+
+      <TooltipContainer value={percentage * 100}>
+        <Tooltip dragging={dragging} color={color}>
+          {getTooltipText()}
+        </Tooltip>
+        <Triangle dragging={dragging} color={color} />
+      </TooltipContainer>
+
+      <CircleTransitionContainer value={percentage * 100}>
+        <Circle
+          color={color}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        />
+        <BiggerCircle
+          dragging={dragging}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        />
+      </CircleTransitionContainer>
+    </Container>
+  );
+};
+
+export default Slider;
