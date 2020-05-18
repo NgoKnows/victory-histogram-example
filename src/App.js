@@ -37,6 +37,7 @@ const TOTAL_YEARS = LAST_YEAR - FIRST_YEAR;
 const getTooltipText = ({ datum }) => {
   const { binnedData, x0, x1 } = datum;
 
+  const playerCount = binnedData.length;
   const playerNames = binnedData
     .slice(0, 2)
     .map(({ player }) => {
@@ -45,18 +46,28 @@ const getTooltipText = ({ datum }) => {
     })
     .join(", ");
 
-  return `${binnedData.length} player${
-    binnedData.length > 1 ? "s" : ""
-  } averaged between ${datum.x0}-${datum.x1} 3PT attempts \n (${playerNames}${
-    binnedData.length > 2 ? `, and ${binnedData.length - 2} more players` : ""
+  return `${playerCount} player${
+    playerCount > 1 ? "s" : ""
+  } averaged between ${x0}-${x1} 3PT attempts \n (${playerNames}${
+    playerCount > 2 ? `, and ${playerCount - 2} more players` : ""
   })`;
+};
+
+const sharedAxisStyles = {
+  axis: {
+    stroke: "transparent",
+  },
+  tickLabels: {
+    fill: white,
+    fontSize: 12,
+  },
 };
 
 function App() {
   const [year, setYear] = useState(FIRST_YEAR);
 
   return (
-    <Container className="App">
+    <Container>
       <svg style={{ position: "fixed", opacity: 0 }}>
         <defs>
           <linearGradient id="gradient1" x1="0%" y1="0%" x2="50%" y2="100%">
@@ -78,28 +89,17 @@ function App() {
           //   />
           // }
           height={260}
-          style={{
-            parent: {
-              overflow: "visible",
-            },
-          }}
         >
           <VictoryLabel
             text={`3pt Attempts Per Game Averages (${yearToSeason(year)})`}
             x={225}
-            y={30}
+            y={20}
             textAnchor="middle"
             style={{ fill: white }}
           />
           <VictoryAxis
             style={{
-              axis: {
-                stroke: "transparent",
-              },
-              tickLabels: {
-                fill: white,
-                fontSize: 12,
-              },
+              ...sharedAxisStyles,
               grid: {
                 fill: white,
                 stroke: white,
@@ -109,23 +109,11 @@ function App() {
             }}
             dependentAxis
           />
-          <VictoryAxis
-            style={{
-              axis: {
-                stroke: "transparent",
-              },
-              tickLabels: {
-                fill: white,
-                fontSize: 12,
-              },
-            }}
-          />
+          <VictoryAxis style={sharedAxisStyles} />
           <VictoryHistogram
             cornerRadius={2}
             domain={{ y: [0, 160] }}
-            animate={{
-              duration: 300,
-            }}
+            animate={{ duration: 300 }}
             data={data[year]}
             bins={_.range(0, 16, 2)}
             style={{
@@ -133,8 +121,6 @@ function App() {
                 stroke: "transparent",
                 fill: "url(#gradient1)",
                 strokeWidth: 1,
-                mixBlendMode: "normal",
-                vectorEffect: "non-scaling-stroke",
               },
               labels: {
                 fill: "red",
