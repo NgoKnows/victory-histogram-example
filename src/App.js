@@ -27,14 +27,30 @@ const Card = styled.div`
   border-left: 8px solid #ff719a;
 `;
 
-const yearToSeason = (year) => {
-  return `${year}-${(year + 1 + "").slice(2, 4)}`;
-};
+const yearToSeason = (year) => `${year}-${(year + 1 + "").slice(2, 4)}`;
 
 const YEARS = Object.keys(data).map((year) => parseInt(year, 10));
-const FIRST_YEAR = 1990;
-const LAST_YEAR = 2019;
+const FIRST_YEAR = YEARS[0];
+const LAST_YEAR = YEARS[YEARS.length - 1];
 const TOTAL_YEARS = LAST_YEAR - FIRST_YEAR;
+
+const getTooltipText = ({ datum }) => {
+  const { binnedData, x0, x1 } = datum;
+
+  const playerNames = binnedData
+    .slice(0, 2)
+    .map(({ player }) => {
+      const [firstName, lastName] = player.split(" ");
+      return lastName ? `${firstName.slice(0, 1)}. ${lastName}` : firstName;
+    })
+    .join(", ");
+
+  return `${binnedData.length} player${
+    binnedData.length > 1 ? "s" : ""
+  } averaged between ${datum.x0}-${datum.x1} 3PT attempts \n (${playerNames}${
+    binnedData.length > 2 ? `, and ${binnedData.length - 2} more players` : ""
+  })`;
+};
 
 function App() {
   const [year, setYear] = useState(FIRST_YEAR);
@@ -69,7 +85,7 @@ function App() {
           }}
         >
           <VictoryLabel
-            text={`3pt Attempt Averages (${yearToSeason(year)})`}
+            text={`3pt Attempts Per Game Averages (${yearToSeason(year)})`}
             x={225}
             y={30}
             textAnchor="middle"
@@ -125,21 +141,12 @@ function App() {
               },
             }}
             x="3pa"
-            labels={({ datum }) =>
-              `${datum.binnedData.length} player${
-                datum.binnedData.length > 1 ? "s" : ""
-              } averaged \n between ${datum.x0}-${
-                datum.x1
-              } 3PT attempts \n ${datum.binnedData
-                .slice(0, 3)
-                .map(({ player }) => player)
-                .join(", ")}`
-            }
+            labels={getTooltipText}
             labelComponent={
               <VictoryTooltip
                 style={{
                   fill: white,
-                  fontSize: 11,
+                  fontSize: 10,
                 }}
                 flyoutStyle={{
                   fill: "#24232a",
@@ -167,6 +174,7 @@ const SliderContainer = styled.div`
 
 const getYear = (percent) =>
   Math.round(FIRST_YEAR + TOTAL_YEARS * (percent / 100));
+
 const SEASONS = YEARS.map((year) => yearToSeason(year));
 
 const YearSlider = ({ year, setYear }) => {
