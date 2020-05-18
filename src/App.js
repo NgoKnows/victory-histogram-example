@@ -22,7 +22,7 @@ const Container = styled.div`
 const Card = styled.div`
   background-color: #24232a;
   border-radius: 5px;
-  padding: 30px;
+  padding: 30px 40px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   border-left: 8px solid #ff719a;
 `;
@@ -60,6 +60,12 @@ const sharedAxisStyles = {
   tickLabels: {
     fill: white,
     fontSize: 12,
+  },
+  axisLabel: {
+    fill: white,
+    padding: 40,
+    fontSize: 13,
+    fontStyle: "italic",
   },
 };
 
@@ -107,9 +113,16 @@ function App() {
                 strokeWidth: 0.5,
               },
             }}
+            label="# of players"
             dependentAxis
           />
-          <VictoryAxis style={sharedAxisStyles} />
+          <VictoryAxis
+            style={{
+              ...sharedAxisStyles,
+              axisLabel: { ...sharedAxisStyles.axisLabel, padding: 35 },
+            }}
+            label="3pt attempts per game"
+          />
           <VictoryHistogram
             cornerRadius={2}
             domain={{ y: [0, 160] }}
@@ -121,6 +134,7 @@ function App() {
                 stroke: "transparent",
                 fill: "url(#gradient1)",
                 strokeWidth: 1,
+                filter: "drop-shadow(10px 10px 3px #4444dd)",
               },
               labels: {
                 fill: "red",
