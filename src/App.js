@@ -45,6 +45,10 @@ const getTooltipText = ({ datum }) => {
 
   const playerCount = binnedData.length;
 
+  if (!playerCount) {
+    return null;
+  }
+
   const playerNames = binnedData
     .slice(0, 2)
     .map(({ player }) => {
@@ -53,15 +57,13 @@ const getTooltipText = ({ datum }) => {
     })
     .join(", ");
 
-  const playerNamesList = playerNames.length
-    ? ` \n (${playerNames}${
-        playerCount > 2 ? `, and ${playerCount - 2} more players` : ""
-      })`
-    : "";
+  const playerNamesList = `\n (${playerNames}${
+    playerCount > 2 ? `, and ${playerCount - 2} more players` : ""
+  })`;
 
   return `${playerCount} player${
     playerCount === 1 ? "" : "s"
-  } averaged between ${x0}-${x1} 3PT attempts${playerNamesList}`;
+  } averaged between ${x0}-${x1} 3PT attempts ${playerNamesList}`;
 };
 
 const sharedAxisStyles = {

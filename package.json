@@ -12,7 +12,7 @@
     "react-scripts": "3.4.1",
     "renature": "^0.3.0",
     "styled-components": "^5.1.0",
-    "victory": "^34.3.4"
+    "victory": "^34.3.6"
   },
   "scripts": {
     "start": "react-scripts start",

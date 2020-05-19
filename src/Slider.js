@@ -110,14 +110,11 @@ const Tooltip = styled.div`
   text-align: center;
   padding: 10px;
   pointer-events: none;
-  min-width: 40px;
   z-index: 100;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
   transition: transform 0.3s ease-out;
-  transform: translate(
-    -50%,
-    ${({ dragging }) => (dragging ? "-36px" : "-25px")}
-  );
+  transform: ${({ dragging }) =>
+    `translate(-50%, ${dragging ? "-36px" : "-25px"})`};
   border-radius: 3px;
   font-weight: bold;
   font-size: 16px;
@@ -134,10 +131,8 @@ const Triangle = styled.div`
   border-left: solid transparent 14px;
   border-right: solid transparent 14px;
   border-top: solid ${({ color }) => color} 14px;
-  transform: translate(
-    -50%,
-    ${({ dragging }) => (dragging ? "-36px" : "-25px")}
-  );
+  transform: ${({ dragging }) =>
+    `translate(-50%, ${dragging ? "-36px" : "-25px"})`};
   transition: color 0.3s ease-out, transform 0.3s ease-out;
 `;
 
